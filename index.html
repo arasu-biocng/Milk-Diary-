@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>பால் பண்ணைக் கணக்கு</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; margin: 0; padding: 15px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: #1e3799; text-align: center; margin-top: 5px; font-size: 24px; }
+        h3 { color: #0a3d62; margin-top: 0; border-bottom: 2px solid #f1f2f6; padding-bottom: 8px; }
+        label { font-weight: bold; display: block; margin-top: 12px; font-size: 15px; color: #333; }
+        input, select, button { width: 100%; padding: 14px; margin-top: 6px; border-radius: 8px; border: 1px solid #b2bec3; box-sizing: border-box; font-size: 16px; }
+        input[readonly] { background-color: #f1f2f6; font-weight: bold; color: #27ae60; font-size: 18px; }
+        .btn-green { background-color: #20bf6b; color: white; border: none; font-weight: bold; margin-top: 18px; font-size: 18px; cursor: pointer; }
+        .btn-blue { background-color: #3867d6; color: white; border: none; font-weight: bold; margin-top: 18px; font-size: 18px; cursor: pointer; }
+        .btn-red { background-color: #eb3b5a; color: white; border: none; font-weight: bold; margin-top: 10px; font-size: 14px; cursor: pointer; }
+        
+        /* வாட்ஸ்அப் பட்டனுக்கான புதிய டிசைன் */
+        .btn-whatsapp { background-color: #25D366; color: white; border: none; font-weight: bold; margin-top: 15px; font-size: 18px; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #dcdde1; padding: 10px 5px; text-align: center; font-size: 14px; }
+        th { background-color: #4b6584; color: white; }
+        .summary-box { background-color: #eccc68; border-radius: 8px; padding: 12px; margin-top: 10px; color: #2f3542; }
+        .summary-box p { margin: 8px 0; font-size: 16px; }
+        .net-pay { background-color: #20bf6b; color: white; padding: 10px; border-radius: 6px; text-align: center; font-size: 18px; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>🥛 தமிழ் பால் பண்ணைக் கணக்கு</h2>
+
+    <!-- 1. பால் பதிவு படிவம் -->
+    <div class="card">
+        <h3>1. தினசரி பால் பதிவு</h3>
+        
+        <label>தேதி:</label>
+        <input type="date" id="entryDate">
+        
+        <label>நேரம் (வேளை):</label>
+        <select id="shift">
+            <option value="காலை">காலை</option>
+            <option value="மாலை">மாலை</option>
+        </select>
+
+        <label>பால் அளவு (லிட்டர்):</label>
+        <input type="number" id="liters" step="0.1" placeholder="எ.கா: 5.5" oninput="calculateTotal()">
+
+        <label>1 லிட்டர் பால் விலை (ரூ.):</label>
+        <input type="number" id="price" step="0.5" placeholder="எ.கா: 35" oninput="calculateTotal()">
+
+        <label>மொத்த பால் பணம் (ரூ.):</label>
+        <input type="number" id="totalAmount" readonly placeholder="0.00">
+
+        <button class="btn-green" onclick="saveMilkEntry()">சேமி (Save)</button>
+    </div>
+
+    <!-- 2. செலவு மற்றும் முன்பணம் படிவம் -->
+    <div class="card">
+        <h3>2. செலவு & முன்பணம் பதிவு</h3>
+        
+        <label>செலவு வகை:</label>
+        <select id="expenseCategory">
+            <option value="தீவனச் செலவு">தீவனச் செலவு</option>
+            <option value="மருத்துவச் செலவு">மருத்துவச் செலவு</option>
+            <option value="முன்பணம் (Advance)">பண்ணை முன்பணம் (Advance)</option>
+            <option value="இதர செலவுகள்">இதர செலவுகள்</option>
+        </select>
+
+        <label>செலவு தொகை (ரூ.):</label>
+        <input type="number" id="expenseAmount" placeholder="எ.கா: 500">
+
+        <button class="btn-blue" onclick="saveExpense()">செலவை சேமி</button>
+    </div>
+
+    <!-- 3. மாதாந்திர கணக்கு அறிக்கை -->
+    <div class="card">
+        <h3>3. மாதாந்திர கணக்கு விவரம்</h3>
+        
+        <div class="summary-box">
+            <p>ஊற்றிய மொத்த பால்: <b><span id="sumLiters">0</span> லிட்டர்</b></p>
+            <p>மொத்த பால் வருமானம்: <b>ரூ. <span id="sumIncome">0</span></b></p>
+            <p>கழித்த செலவு / அட்வான்ஸ்: <b>ரூ. <span id="sumExpenses">0</span></b></p>
+            
+            <div class="net-pay">
+                கையில் வாங்கும் நிகர பணம்:<br>ரூ. <span id="netProfit">0</span>
+            </div>
+        </div>
+
+        <!-- வாட்ஸ்அப் பட்டன் -->
+        <button class="btn-whatsapp" onclick="shareViaWhatsApp()">📱 வாட்ஸ்அப்பில் அனுப்பு (Share)</button>
+
+        <h3 style="margin-top: 20px;">பதிவு செய்யப்பட்ட விவரங்கள்</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>தேதி</th>
+                    <th>விவரம்</th>
+                    <th>அளவு</th>
+                    <th>தொகை</th>
+                </tr>
+            </thead>
+            <tbody id="logTable">
+                <!-- பதிவுகள் இங்கு தோன்றும் -->
+            </tbody>
+        </table>
+
+        <button class="btn-red" onclick="clearAllData()">அனைத்து கணக்குகளையும் அழி (Reset)</button>
+    </div>
+
+    <script>
+        document.getElementById('entryDate').valueAsDate = new Date();
+        let entries = JSON.parse(localStorage.getItem('dairyEntriesTamil')) || [];
+
+        function calculateTotal() {
+            let l = parseFloat(document.getElementById('liters').value) || 0;
+            let p = parseFloat(document.getElementById('price').value) || 0;
+            document.getElementById('totalAmount').value = (l * p).toFixed(2);
+        }
+
+        function saveMilkEntry() {
+            let date = document.getElementById('entryDate').value;
+            let shift = document.getElementById('shift').value;
+            let liters = parseFloat(document.getElementById('liters').value) || 0;
+            let price = parseFloat(document.getElementById('price').value) || 0;
+            let total = parseFloat(document.getElementById('totalAmount').value) || 0;
+
+            if (liters <= 0) { alert('தயவுசெய்து பால் அளவை உள்ளிடவும்!'); return; }
+
+            let record = { id: Date.now(), type: 'milk', date, shift, liters, price, total };
+            entries.push(record);
+            localStorage.setItem('dairyEntriesTamil', JSON.stringify(entries));
+            alert('பால் பதிவு வெற்றிப் பெற சேமிக்கப்பட்டது!');
+            document.getElementById('liters').value = '';
+            document.getElementById('totalAmount').value = '';
+            updateUI();
+        }
+
+        function saveExpense() {
+            let date = document.getElementById('entryDate').value;
+            let category = document.getElementById('expenseCategory').value;
+            let amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+
+            if (amount <= 0) { alert('தயவுசெய்து தொகையை உள்ளிடவும்!'); return; }
+
+            let record = { id: Date.now(), type: 'expense', date, category, amount };
+            entries.push(record);
+            localStorage.setItem('dairyEntriesTamil', JSON.stringify(entries));
+            alert('செலவு பதிவு சேமிக்கப்பட்டது!');
+            document.getElementById('expenseAmount').value = '';
+            updateUI();
+        }
+
+        function updateUI() {
+            let table = document.getElementById('logTable');
+            table.innerHTML = '';
+            
+            let totalLiters = 0, totalIncome = 0, totalExpenses = 0;
+
+            entries.forEach(item => {
+                let row = document.createElement('tr');
+                if (item.type === 'milk') {
+                    totalLiters += item.liters; totalIncome += item.total;
+                    row.innerHTML = `<td>${item.date}</td><td>பால் (${item.shift})</td><td>${item.liters} லி</td><td>ரூ. ${item.total}</td>`;
+                } else {
+                    totalExpenses += item.amount;
+                    row.innerHTML = `<td>${item.date}</td><td>${item.category}</td><td>-</td><td>ரூ. ${item.amount}</td>`;
+                }
+                table.appendChild(row);
+            });
+
+            document.getElementById('sumLiters').innerText = totalLiters.toFixed(1);
+            document.getElementById('sumIncome').innerText = totalIncome.toFixed(2);
+            document.getElementById('sumExpenses').innerText = totalExpenses.toFixed(2);
+            document.getElementById('netProfit').innerText = (totalIncome - totalExpenses).toFixed(2);
+        }
+
+        function clearAllData() {
+            if (confirm('நிச்சயமாக அனைத்து பதிவுகளையும் அழிக்க விரும்புகிறீர்களா?')) {
+                localStorage.removeItem('dairyEntriesTamil');
+                entries = []; updateUI();
+                alert('அனைத்து தரவுகளும் அழிக்கப்பட்டுவிட்டன.');
+            }
+        }
+
+        // வாட்ஸ்அப்பில் அனுப்பும் புதிய வசதி
+        function shareViaWhatsApp() {
+            let totalLiters = document.getElementById('sumLiters').innerText;
+            let totalIncome = document.getElementById('sumIncome').innerText;
+            let totalExpenses = document.getElementById('sumExpenses').innerText;
+            let netProfit = document.getElementById('netProfit').innerText;
+
+            let message = `🐄 *பால் பண்ணைக் கணக்கு அறிக்கை* 🐄\n`;
+            message += `-------------------------\n`;
+            message += `ஊற்றிய மொத்த பால்: *${totalLiters} லிட்டர்*\n`;
+            message += `மொத்த பால் வருமானம்: *ரூ. ${totalIncome}*\n`;
+            message += `கழித்த செலவு/அட்வான்ஸ்: *ரூ. ${totalExpenses}*\n`;
+            message += `-------------------------\n`;
+            message += `💵 *கையில் வாங்கும் நிகர பணம்: ரூ. ${netProfit}* 💵\n`;
+            message += `-------------------------`;
+
+            // வாட்ஸ்அப் ஓப்பன் செய்யும் லிங்க்
+            let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
