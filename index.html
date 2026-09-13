@@ -206,6 +206,31 @@
         }
 
         updateUI();
+
+    // Auto-Update தர்க்கம் (GitHub connection)
+    const GITHUB_APP_URL = "https://raw.githubusercontent.com/arasu-biocng/Milk-Diary/main/index.html";
+
+    async function checkForUpdates() {
+      try {
+        const response = await fetch(GITHUB_APP_URL + "?t=" + new Date().getTime());
+        if (response.ok) {
+          const latestCode = await response.text();
+          const currentCode = document.documentElement.outerHTML;
+          if (latestCode.trim() !== currentCode.trim()) {
+            document.open();
+            document.write(latestCode);
+            document.close();
+          }
+        }
+      } catch (error) {
+        console.log("Offline mode: Using cached app version.");
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", checkForUpdates);
+  </script>
+</body>
+</html>
     </script>
 </body>
 </html>
