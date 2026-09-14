@@ -289,23 +289,25 @@ const APP_VERSION = "1.1";
 
 async function checkForUpdates() {
   try {
-    const response = await fetch(GITHUB_APP_URL + "?v=" + Date.now());
+    const response = await fetch(GITHUB_APP_URL + "?v=" + Date.now(), {
+      cache: 'no-store'
+    });
+    
     if (response.ok) {
       const latestCode = await response.text();
-      const currentVersion = localStorage.getItem("app_version") || "1.0";
+      const currentCode = localStorage.getItem("app_code");
 
-      if (currentVersion !== APP_VERSION) {
-        localStorage.setItem("app_version", APP_VERSION);
+      if (currentCode !== latestCode) {
+        localStorage.setItem("app_code", latestCode);
         document.open();
         document.write(latestCode);
         document.close();
       }
     }
   } catch (err) {
-    console.log("ஆஃப்லைன் முறை அல்லது அப்டேட் சோதிப்பதில் சிக்கல்");
+    console.log("ஆப்லைனில் உள்ளது அல்லது அப்டேட் சோதிப்பதில் சிக்கல்");
   }
 }
-
         function updateOnlineStatus() {
           if (navigator.onLine) {
             console.log("ஆன்லைன்: இணைய இணைப்பு உள்ளது.");
