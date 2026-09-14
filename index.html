@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-< lang="ta">
+<html lang="ta">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +27,7 @@
         .net-pay { background-color: #20bf6b; color: white; padding: 10px; border-radius: 6px; text-align: center; font-size: 18px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
-<>
+<body>
 
     <h2>🥛 தமிழ் பால் பண்ணைக் கணக்கு</h2>
 
@@ -109,6 +109,35 @@
         <button class="btn-red" onclick="clearAllData()">அனைத்து கணக்குகளையும் அழி (Reset)</button>
     </div>
 
+    <!-- 🐄 4. மாடுகள் & சினை ஊசி மேலாண்மை -->
+    <div class="card">
+      <h3>🐄 மாடுகள் & சினை ஊசி நிர்வாகம்</h3>
+      
+      <!-- 1. புதிய மாடு சேர்க்கும் படிவம் -->
+      <h4>புதிய மாடு சேர்க்க</h4>
+      <input type="text" id="cowName" placeholder="மாட்டின் பெயர் / Tag No" style="margin-bottom: 8px;">
+      <select id="cowBreed" style="margin-bottom: 8px;">
+        <option value="HF">HF</option>
+        <option value="Jersey">ஜெர்சி</option>
+        <option value="Country">நாட்டு மாடு</option>
+      </select>
+      <button class="btn-green" onclick="addCow()" style="margin-top: 5px;">மாடு சேர்</button>
+
+      <hr style="margin: 20px 0;">
+
+      <!-- 2. சினை ஊசி பதிவு படிவம் -->
+      <h4>சினை ஊசி பதிவு</h4>
+      <select id="selectCow" style="margin-bottom: 8px;">
+        <option value="">மாட்டைத் தேர்ந்தெடுக்கவும்</option>
+      </select>
+      <input type="date" id="aiDate" style="margin-bottom: 8px;">
+      <input type="text" id="bullId" placeholder="காளை எண் / டாக்டர் பெயர்" style="margin-bottom: 8px;">
+      <button class="btn-blue" onclick="saveAI()" style="margin-top: 5px;">சினை ஊசி பதிவு செய்</button>
+
+      <!-- கணக்கிடப்பட்ட நாட்கள் திரையில் தெரிய -->
+      <div id="aiResult" style="margin-top: 15px; background: #eef; padding: 12px; border-radius: 8px; display: none; border: 1px solid #3867d6;"></div>
+    </div>
+
     <script>
         document.getElementById('entryDate').valueAsDate = new Date();
         let entries = JSON.parse(localStorage.getItem('dairyEntriesTamil')) || [];
@@ -184,7 +213,6 @@
             }
         }
 
-        // வாட்ஸ்அப்பில் அனுப்பும் புதிய வசதி
         function shareViaWhatsApp() {
             let totalLiters = document.getElementById('sumLiters').innerText;
             let totalIncome = document.getElementById('sumIncome').innerText;
@@ -200,152 +228,99 @@
             message += `💵 *கையில் வாங்கும் நிகர பணம்: ரூ. ${netProfit}* 💵\n`;
             message += `-------------------------`;
 
-            // வாட்ஸ்அப் ஓப்பன் செய்யும் லிங்க்
             let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
 
-        updateUI();
+        // --- மாடுகள் மேலாண்மை & சினை ஊசி தர்க்கம் ---
+        let cows = JSON.parse(localStorage.getItem("cows")) || [];
+        let aiRecords = JSON.parse(localStorage.getItem("aiRecords")) || [];
 
-    // Auto-Update தர்க்கம் (GitHub connection)
-    const GITHUB_APP_URL = "https://raw.githubusercontent.com/arasu-biocng/Milk-Diary/main/index.html";
-
-    async function checkForUpdates() {
-      try {
-        const response = await fetch(GITHUB_APP_URL + "?t=" + new Date().getTime());
-        if (response.ok) {
-          const latestCode = await response.text();
-          const currentCode = document.documentElement.outerHTML;
-          if (latestCode.trim() !== currentCode.trim()) {
-            document.open();
-            document.write(latestCode);
-            document.close();
-          }
+        function updateCowDropdown() {
+          const select = document.getElementById("selectCow");
+          if (!select) return;
+          select.innerHTML = '<option value="">மாட்டைத் தேர்ந்தெடுக்கவும்</option>';
+          cows.forEach(cow => {
+            select.innerHTML += `<option value="${cow.name}">${cow.name} (${cow.breed})</option>`;
+          });
         }
-      } catch (error) {
-        console.log("Offline mode: Using cached app version.");
-      }
-    }
-    // 1. ஆப் ஆன்லைன் / ஆஃப்லைன் நிலையைத் திரையில் காட்டும் வசதி
-    function updateOnlineStatus() {
-      if (navigator.onLine) {
-        console.log("ஆன்லைன்: இணைய இணைப்பு உள்ளது.");
-        checkForUpdates(); // டேட்டா இருக்கும் போது ஆன்லைனில் அப்டேட் சோதிக்கும்
-      } else {
-        console.log("ஆஃப்லைன்: இணைய இணைப்பு இல்லை. ஆப் ஆஃப்லைனில் இயங்குகிறது.");
-      }
-    }
 
-    // 2. Auto-Update தர்க்கம் (இணையம் இருக்கும் போது மட்டும் இயங்கும்)
-    const GITHUB_APP_URL = "https://raw.githubusercontent.com/arasu-biocng/Milk-Diary/main/index.html";
+        function addCow() {
+          const name = document.getElementById("cowName").value.trim();
+          const breed = document.getElementById("cowBreed").value;
+          if (!name) return alert("மாட்டின் பெயரை உள்ளிடவும்!");
 
-    async function checkForUpdates() {
-      if (!navigator.onLine) return;
+          cows.push({ name, breed });
+          localStorage.setItem("cows", JSON.stringify(cows));
+          document.getElementById("cowName").value = "";
+          updateCowDropdown();
+          alert("மாடு வெற்றிகரமாகச் சேர்க்கப்பட்டது!");
+        }
 
-      try {
-        const response = await fetch(GITHUB_APP_URL + "?t=" + new Date().getTime());
-        if (response.ok) {
-          const latestCode = await response.text();
-          const currentCode = document.documentElement.outerHTML;
+        function saveAI() {
+          const cowName = document.getElementById("selectCow").value;
+          const aiDateStr = document.getElementById("aiDate").value;
+          const bullId = document.getElementById("bullId").value;
+
+          if (!cowName || !aiDateStr) return alert("மாடு மற்றும் தேதியைத் தேர்ந்தெடுக்கவும்!");
+
+          const aiDate = new Date(aiDateStr);
           
-          // புதிய அப்டேட் இருந்தால் மட்டுமே ஆப்பைப் புதுப்பிக்கும்
-          if (latestCode.trim() !== currentCode.trim() && latestCode.length > 500) {
-            document.open();
-            document.write(latestCode);
-            document.close();
+          const checkDate = new Date(aiDate); checkDate.setDate(checkDate.getDate() + 90);
+          const dryDate = new Date(aiDate); dryDate.setDate(dryDate.getDate() + 220);
+          const deliveryDate = new Date(aiDate); deliveryDate.setDate(deliveryDate.getDate() + 280);
+
+          const resultDiv = document.getElementById("aiResult");
+          resultDiv.style.display = "block";
+          resultDiv.innerHTML = `
+            <strong>📅 கணக்கீட்டு விவரங்கள் (${cowName}):</strong><br>
+            • சினை பரிசோதனை நாள்: <b>${checkDate.toISOString().split('T')[0]}</b><br>
+            • பால் நிறுத்தும் நாள் (Dry Period): <b>${dryDate.toISOString().split('T')[0]}</b><br>
+            • கன்று ஈனும் நாள் (Expected Delivery): <b>${deliveryDate.toISOString().split('T')[0]}</b>
+          `;
+
+          aiRecords.push({ cowName, aiDateStr, bullId, deliveryDate: deliveryDate.toISOString().split('T')[0] });
+          localStorage.setItem("aiRecords", JSON.stringify(aiRecords));
+        }
+
+        // --- Auto-Update தர்க்கம் ---
+        const GITHUB_APP_URL = "https://raw.githubusercontent.com/arasu-biocng/Milk-Diary/main/index.html";
+
+        async function checkForUpdates() {
+          try {
+            const response = await fetch(GITHUB_APP_URL + "?t=" + new Date().getTime());
+            if (response.ok) {
+              const latestCode = await response.text();
+              const currentCode = document.documentElement.outerHTML;
+
+              if (latestCode.trim() !== currentCode.trim() && latestCode.length > 500) {
+                document.open();
+                document.write(latestCode);
+                document.close();
+              }
+            }
+          } catch (err) {
+            console.log("அப்டேட் சோதிப்பதில் சிக்கல் அல்லது ஆஃப்லைன்");
           }
         }
-      } catch (error) {
-        console.log("ஆஃப்லைன் பயன்முறை: உள்ளூர் பதிப்பு பயன்படுத்தப்படுகிறது.");
-      }
-    }
 
-    // ஆப் திறக்கும் போது மற்றும் இன்டர்நெட் ஆன்/ஆஃப் ஆகும் போது இயங்கும்
-    window.addEventListener("DOMContentLoaded", () => {
-      updateOnlineStatus();
-      updateUI();
-    });
+        function updateOnlineStatus() {
+          if (navigator.onLine) {
+            console.log("ஆன்லைன்: இணைய இணைப்பு உள்ளது.");
+            checkForUpdates();
+          } else {
+            console.log("ஆஃப்லைன்: இணைய இணைப்பு இல்லை.");
+          }
+        }
 
-    window.addEventListener("online", updateOnlineStatus);
-    window.addEventListener("offline", updateOnlineStatus);
-      // --- மாடுகள் மேலாண்மை & சினை ஊசி தர்க்கம் ---
-  let cows = JSON.parse(localStorage.getItem("cows")) || [];
-  let aiRecords = JSON.parse(localStorage.getItem("aiRecords")) || [];
+        window.addEventListener("DOMContentLoaded", () => {
+          updateOnlineStatus();
+          updateUI();
+          updateCowDropdown();
+        });
 
-  function updateCowDropdown() {
-    const select = document.getElementById("selectCow");
-    if (!select) return;
-    select.innerHTML = '<option value="">மாட்டைத் தேர்ந்தெடுக்கவும்</option>';
-    cows.forEach(cow => {
-      select.innerHTML += `<option value="${cow.name}">${cow.name} (${cow.breed})</option>`;
-    });
-  }
-
-  function addCow() {
-    const name = document.getElementById("cowName").value.trim();
-    const breed = document.getElementById("cowBreed").value;
-    if (!name) return alert("மாட்டின் பெயரை உள்ளிடவும்!");
-
-    cows.push({ name, breed });
-    localStorage.setItem("cows", JSON.stringify(cows));
-    document.getElementById("cowName").value = "";
-    updateCowDropdown();
-    alert("மாடு வெற்றிகரமாகச் சேர்க்கப்பட்டது!");
-  }
-
-  function saveAI() {
-    const cowName = document.getElementById("selectCow").value;
-    const aiDateStr = document.getElementById("aiDate").value;
-    const bullId = document.getElementById("bullId").value;
-
-    if (!cowName || !aiDateStr) return alert("மாடு மற்றும் தேதியைத் தேர்ந்தெடுக்கவும்!");
-
-    const aiDate = new Date(aiDateStr);
-    
-    const checkDate = new Date(aiDate); checkDate.setDate(checkDate.getDate() + 90);
-    const dryDate = new Date(aiDate); dryDate.setDate(dryDate.getDate() + 220);
-    const deliveryDate = new Date(aiDate); deliveryDate.setDate(deliveryDate.getDate() + 280);
-
-    const resultDiv = document.getElementById("aiResult");
-    resultDiv.style.display = "block";
-    resultDiv.innerHTML = `
-      <strong>📅 கணக்கீட்டு விவரங்கள் (${cowName}):</strong><br>
-      • சினை பரிசோதனை நாள்: <b>${checkDate.toISOString().split('T')[0]}</b><br>
-      • பால் நிறுத்தும் நாள் (Dry Period): <b>${dryDate.toISOString().split('T')[0]}</b><br>
-      • கன்று ஈனும் நாள் (Expected Delivery): <b>${deliveryDate.toISOString().split('T')[0]}</b>
-    `;
-
-    aiRecords.push({ cowName, aiDateStr, bullId, deliveryDate: deliveryDate.toISOString().split('T')[0] });
-    localStorage.setItem("aiRecords", JSON.stringify(aiRecords));
-  }
-  </script>
-<!-- 🐄 ஆப்பின் இறுதியில் மாடுகள் & சினை ஊசி மேலாண்மை -->
-<div class="card" style="margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;">
-  <h3>🐄 மாடுகள் & சினை ஊசி நிர்வாகம்</h3>
-  
-  <!-- 1. புதிய மாடு சேர்க்கும் படிவம் -->
-  <h4>புதிய மாடு சேர்க்க</h4>
-  <input type="text" id="cowName" placeholder="மாட்டின் பெயர் / Tag No" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
-  <select id="cowBreed" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
-    <option value="HF">HF</option>
-    <option value="Jersey">ஜெர்சி</option>
-    <option value="Country">நாட்டு மாடு</option>
-  </select>
-  <button onclick="addCow()" style="padding: 8px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">மாடு சேர்</button>
-
-  <hr style="margin: 15px 0;">
-
-  <!-- 2. சினை ஊசி பதிவு படிவம் -->
-  <h4>சினை ஊசி பதிவு</h4>
-  <select id="selectCow" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
-    <option value="">மாட்டைத் தேர்ந்தெடுக்கவும்</option>
-  </select>
-  <input type="date" id="aiDate" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
-  <input type="text" id="bullId" placeholder="காளை எண் / டாக்டர் பெயர்" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
-  <button onclick="saveAI()" style="padding: 8px 15px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">சினை ஊசி பதிவு செய்</button>
-
-  <!-- கணக்கிடப்பட்ட நாட்கள் திரையில் தெரிய -->
-  <div id="aiResult" style="margin-top: 15px; background: #eef; padding: 10px; border-radius: 5px; display: none;"></div>
-</div>
+        window.addEventListener("online", updateOnlineStatus);
+        window.addEventListener("offline", updateOnlineStatus);
+    </script>
 </body>
 </html>
