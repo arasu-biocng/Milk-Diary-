@@ -268,6 +268,84 @@
 
     window.addEventListener("online", updateOnlineStatus);
     window.addEventListener("offline", updateOnlineStatus);
+      // --- மாடுகள் மேலாண்மை & சினை ஊசி தர்க்கம் ---
+  let cows = JSON.parse(localStorage.getItem("cows")) || [];
+  let aiRecords = JSON.parse(localStorage.getItem("aiRecords")) || [];
+
+  function updateCowDropdown() {
+    const select = document.getElementById("selectCow");
+    if (!select) return;
+    select.innerHTML = '<option value="">மாட்டைத் தேர்ந்தெடுக்கவும்</option>';
+    cows.forEach(cow => {
+      select.innerHTML += `<option value="${cow.name}">${cow.name} (${cow.breed})</option>`;
+    });
+  }
+
+  function addCow() {
+    const name = document.getElementById("cowName").value.trim();
+    const breed = document.getElementById("cowBreed").value;
+    if (!name) return alert("மாட்டின் பெயரை உள்ளிடவும்!");
+
+    cows.push({ name, breed });
+    localStorage.setItem("cows", JSON.stringify(cows));
+    document.getElementById("cowName").value = "";
+    updateCowDropdown();
+    alert("மாடு வெற்றிகரமாகச் சேர்க்கப்பட்டது!");
+  }
+
+  function saveAI() {
+    const cowName = document.getElementById("selectCow").value;
+    const aiDateStr = document.getElementById("aiDate").value;
+    const bullId = document.getElementById("bullId").value;
+
+    if (!cowName || !aiDateStr) return alert("மாடு மற்றும் தேதியைத் தேர்ந்தெடுக்கவும்!");
+
+    const aiDate = new Date(aiDateStr);
+    
+    const checkDate = new Date(aiDate); checkDate.setDate(checkDate.getDate() + 90);
+    const dryDate = new Date(aiDate); dryDate.setDate(dryDate.getDate() + 220);
+    const deliveryDate = new Date(aiDate); deliveryDate.setDate(deliveryDate.getDate() + 280);
+
+    const resultDiv = document.getElementById("aiResult");
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = `
+      <strong>📅 கணக்கீட்டு விவரங்கள் (${cowName}):</strong><br>
+      • சினை பரிசோதனை நாள்: <b>${checkDate.toISOString().split('T')[0]}</b><br>
+      • பால் நிறுத்தும் நாள் (Dry Period): <b>${dryDate.toISOString().split('T')[0]}</b><br>
+      • கன்று ஈனும் நாள் (Expected Delivery): <b>${deliveryDate.toISOString().split('T')[0]}</b>
+    `;
+
+    aiRecords.push({ cowName, aiDateStr, bullId, deliveryDate: deliveryDate.toISOString().split('T')[0] });
+    localStorage.setItem("aiRecords", JSON.stringify(aiRecords));
+  }
   </script>
+<!-- 🐄 ஆப்பின் இறுதியில் மாடுகள் & சினை ஊசி மேலாண்மை -->
+<div class="card" style="margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9;">
+  <h3>🐄 மாடுகள் & சினை ஊசி நிர்வாகம்</h3>
+  
+  <!-- 1. புதிய மாடு சேர்க்கும் படிவம் -->
+  <h4>புதிய மாடு சேர்க்க</h4>
+  <input type="text" id="cowName" placeholder="மாட்டின் பெயர் / Tag No" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+  <select id="cowBreed" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+    <option value="HF">HF</option>
+    <option value="Jersey">ஜெர்சி</option>
+    <option value="Country">நாட்டு மாடு</option>
+  </select>
+  <button onclick="addCow()" style="padding: 8px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">மாடு சேர்</button>
+
+  <hr style="margin: 15px 0;">
+
+  <!-- 2. சினை ஊசி பதிவு படிவம் -->
+  <h4>சினை ஊசி பதிவு</h4>
+  <select id="selectCow" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+    <option value="">மாட்டைத் தேர்ந்தெடுக்கவும்</option>
+  </select>
+  <input type="date" id="aiDate" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+  <input type="text" id="bullId" placeholder="காளை எண் / டாக்டர் பெயர்" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+  <button onclick="saveAI()" style="padding: 8px 15px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer;">சினை ஊசி பதிவு செய்</button>
+
+  <!-- கணக்கிடப்பட்ட நாட்கள் திரையில் தெரிய -->
+  <div id="aiResult" style="margin-top: 15px; background: #eef; padding: 10px; border-radius: 5px; display: none;"></div>
+</div>
 </body>
 </html>
