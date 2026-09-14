@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ta">
+< lang="ta">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +27,7 @@
         .net-pay { background-color: #20bf6b; color: white; padding: 10px; border-radius: 6px; text-align: center; font-size: 18px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
-<body>
+<>
 
     <h2>🥛 தமிழ் பால் பண்ணைக் கணக்கு</h2>
 
@@ -226,11 +226,48 @@
         console.log("Offline mode: Using cached app version.");
       }
     }
+    // 1. ஆப் ஆன்லைன் / ஆஃப்லைன் நிலையைத் திரையில் காட்டும் வசதி
+    function updateOnlineStatus() {
+      if (navigator.onLine) {
+        console.log("ஆன்லைன்: இணைய இணைப்பு உள்ளது.");
+        checkForUpdates(); // டேட்டா இருக்கும் போது ஆன்லைனில் அப்டேட் சோதிக்கும்
+      } else {
+        console.log("ஆஃப்லைன்: இணைய இணைப்பு இல்லை. ஆப் ஆஃப்லைனில் இயங்குகிறது.");
+      }
+    }
 
-    window.addEventListener("DOMContentLoaded", checkForUpdates);
+    // 2. Auto-Update தர்க்கம் (இணையம் இருக்கும் போது மட்டும் இயங்கும்)
+    const GITHUB_APP_URL = "https://raw.githubusercontent.com/arasu-biocng/Milk-Diary/main/index.html";
+
+    async function checkForUpdates() {
+      if (!navigator.onLine) return;
+
+      try {
+        const response = await fetch(GITHUB_APP_URL + "?t=" + new Date().getTime());
+        if (response.ok) {
+          const latestCode = await response.text();
+          const currentCode = document.documentElement.outerHTML;
+          
+          // புதிய அப்டேட் இருந்தால் மட்டுமே ஆப்பைப் புதுப்பிக்கும்
+          if (latestCode.trim() !== currentCode.trim() && latestCode.length > 500) {
+            document.open();
+            document.write(latestCode);
+            document.close();
+          }
+        }
+      } catch (error) {
+        console.log("ஆஃப்லைன் பயன்முறை: உள்ளூர் பதிப்பு பயன்படுத்தப்படுகிறது.");
+      }
+    }
+
+    // ஆப் திறக்கும் போது மற்றும் இன்டர்நெட் ஆன்/ஆஃப் ஆகும் போது இயங்கும்
+    window.addEventListener("DOMContentLoaded", () => {
+      updateOnlineStatus();
+      updateUI();
+    });
+
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
   </script>
-</body>
-</html>
-    </script>
 </body>
 </html>
